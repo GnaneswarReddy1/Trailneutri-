@@ -30,7 +30,7 @@ const VerifyEmail = () => {
     console.log("📤 Sending verification request to server...");
     
     try {
-      const response = await fetch("https://react-app-39ex.onrender.com/api/verify-email", {
+      const response = await fetch("https://react-app-1-zmq6.onrender.com/api/verify-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
