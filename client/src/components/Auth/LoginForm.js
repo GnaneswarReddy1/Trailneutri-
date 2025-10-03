@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+
 const LoginForm = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     email: "",
@@ -50,7 +53,7 @@ const LoginForm = ({ onLogin }) => {
     setMessage("");
 
     try {
-      const response = await fetch("https://react-app-1-zmq6.onrender.com/api/login", {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -60,12 +63,23 @@ const LoginForm = ({ onLogin }) => {
       });
 
       const data = await response.json();
+      console.log("Login response:", data);
 
-      if (response.ok) {
+      if (response.ok && data.token && data.user) {
         setMessage("✅ Login successful!");
         setMessageType("success");
         onLogin(data.token, data.user, formData.rememberMe);
-      } else {
+       // Redirect to dashboard with success message
+        setTimeout(() => {
+          navigate("/dashboard", { 
+            state: { 
+              from: 'signup',
+              message: "You've logged in successfully!"
+            } 
+          });
+        }, 1500);
+    
+    } else {
         setMessage("❌ " + (data.message || "Login failed"));
         setMessageType("error");
       }
@@ -138,7 +152,7 @@ const LoginForm = ({ onLogin }) => {
                 title={showPassword ? "Hide password" : "Show password"}
               >
                 <span style={passwordIconStyle}>
-                  {showPassword ?"🔓" : "🔒"}
+                  {showPassword ? "🔓" : "🔒"}
                 </span>
               </button>
             </div>
@@ -188,7 +202,7 @@ const LoginForm = ({ onLogin }) => {
   );
 };
 
-// Styles
+// Styles (keep your existing styles exactly as they are)
 const containerStyle = {
   minHeight: '100vh',
   display: 'flex',

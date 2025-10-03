@@ -42,13 +42,30 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
     return `${feet}'${inches}"`;
   };
 
+  // Safe user data access
+  const getUserEmail = () => {
+    return userInfo?.email || "User";
+  };
+
+  const getUserGender = () => {
+    return userInfo?.gender || "Not specified";
+  };
+
+  const getUserHeight = () => {
+    return userInfo?.height || "Not specified";
+  };
+
+  const getUserWeight = () => {
+    return userInfo?.weight || "Not specified";
+  };
+
   return (
     <div style={dashboardStyle}>
       {/* Navigation Header */}
       <nav style={navbarStyle}>
         <div style={navBrandStyle}>
           <span style={navIcon}>🏥</span>
-          <h1 style={navTitle}>TrimNutri+</h1>
+          <h1 style={navTitle}>TrailNeutri+</h1>
         </div>
         {/* Right side container for actions (keeps buttons anchored right) */}
         <div style={rightContainerStyle}>
@@ -96,7 +113,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
         <div style={welcomeSectionStyle}>
           <div style={welcomeContentStyle}>
             <h1 style={welcomeTitleStyle}>
-              Welcome, <span style={highlightStyle}>{userInfo?.email}</span>
+              Welcome, <span style={highlightStyle}>{getUserEmail()}</span>
             </h1>
             <p style={welcomeSubtitleStyle}>
               Your health journey starts here. Manage your profile and access healthcare services.
@@ -125,7 +142,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
                 <div style={infoIconStyle}>📧</div>
                 <div>
                   <h3 style={infoLabelStyle}>Email</h3>
-                  <p style={infoValueStyle}>{userInfo?.email}</p>
+                  <p style={infoValueStyle}>{getUserEmail()}</p>
                 </div>
               </div>
               
@@ -133,7 +150,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
                 <div style={infoIconStyle}>⚧️</div>
                 <div>
                   <h3 style={infoLabelStyle}>Gender</h3>
-                  <p style={infoValueStyle}>{userInfo?.gender}</p>
+                  <p style={infoValueStyle}>{getUserGender()}</p>
                 </div>
               </div>
               
@@ -142,9 +159,9 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
                 <div>
                   <h3 style={infoLabelStyle}>Height</h3>
                   <p style={infoValueStyle}>
-                    {convertHeightToFeetInches(userInfo?.height)}
-                    {userInfo?.height && userInfo.height !== "Not specified" && (
-                      <span style={secondaryValueStyle}> ({userInfo.height} cm)</span>
+                    {convertHeightToFeetInches(getUserHeight())}
+                    {getUserHeight() && getUserHeight() !== "Not specified" && (
+                      <span style={secondaryValueStyle}> ({getUserHeight()} cm)</span>
                     )}
                   </p>
                 </div>
@@ -155,8 +172,8 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
                 <div>
                   <h3 style={infoLabelStyle}>Weight</h3>
                   <p style={infoValueStyle}>
-                    {userInfo?.weight} 
-                    {userInfo?.weight && userInfo.weight !== "Not specified" && (
+                    {getUserWeight()} 
+                    {getUserWeight() && getUserWeight() !== "Not specified" && (
                       <span style={secondaryValueStyle}> kg</span>
                     )}
                   </p>
@@ -197,7 +214,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
   );
 };
 
-// Styles
+// Styles (keep all your existing styles exactly as they are)
 const dashboardStyle = {
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',

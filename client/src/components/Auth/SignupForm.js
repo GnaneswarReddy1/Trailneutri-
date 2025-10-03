@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordStrengthMeter from "../Common/PasswordStrengthMeter";
 
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+
 const SignupForm = () => {
-  // Use a single API base URL. Set REACT_APP_API_URL in your environment for production.
-  const API_BASE = process.env.REACT_APP_API_URL || "http://10.0.0.2:4000";
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -72,7 +73,7 @@ const SignupForm = () => {
     };
 
     try {
-      const response = await fetch("https://react-app-1-zmq6.onrender.com/api/signup", {
+      const response = await fetch(`${API_BASE_URL}/api/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
@@ -342,7 +343,7 @@ const SignupForm = () => {
   );
 };
 
-// Styles
+// Styles (keep all your existing styles exactly as they are)
 const containerStyle = {
   minHeight: '10vh',
   display: 'flex',
@@ -634,33 +635,5 @@ const spinnerStyle = {
   borderRadius: '50%',
   animation: 'spin 1s linear infinite',
 };
-
-// Add custom CSS for select hover effects
-const customSelectCSS = `
-  .custom-select:focus {
-    border-color: #00695c;
-    box-shadow: 0 0 0 3px rgba(0, 105, 92, 0.1);
-  }
-  
-  .custom-select:hover {
-    border-color: #cbd5e0;
-  }
-  
-  .custom-select option {
-    padding: 8px;
-    background: white;
-  }
-`;
-
-// Inject the custom CSS
-const styleSheet = document.styleSheets[0];
-try {
-  styleSheet.insertRule(customSelectCSS, styleSheet.cssRules.length);
-} catch (e) {
-  // Fallback if CSS injection fails
-  const style = document.createElement('style');
-  style.textContent = customSelectCSS;
-  document.head.appendChild(style);
-}
 
 export default SignupForm;

@@ -7,6 +7,9 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import LoadingSpinner from "./components/Common/LoadingSpinner";
 
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+
 function App() {
   const [token, setToken] = useState(
     localStorage.getItem("token") || sessionStorage.getItem("token")
@@ -26,19 +29,24 @@ function App() {
   const fetchUserData = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:4000/api/dashboard", {
-        headers: { Authorization: token },
+      const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUserInfo(data);
+        setUserInfo(data.user);
       } else {
         // Token might be invalid
+        console.error("Token invalid or expired");
         handleLogout();
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+      handleLogout();
     } finally {
       setLoading(false);
     }
@@ -57,8 +65,8 @@ function App() {
 
   const handleLogout = () => {
     console.log("🚪 Logging out...");
-    localStorage.clear();
-    sessionStorage.clear();
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setToken(null);
     setUserInfo(null);
     navigate("/login", { replace: true, state: { from: 'logout' } });

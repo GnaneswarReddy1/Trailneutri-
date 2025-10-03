@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const VerifyEmail = () => {
     console.log("📤 Sending verification request to server...");
     
     try {
-      const response = await fetch("https://react-app-1-zmq6.onrender.com/api/verify-email", {
+      const response = await fetch(`${API_BASE_URL}/api/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),

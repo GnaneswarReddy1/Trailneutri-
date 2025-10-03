@@ -6,8 +6,8 @@ const {
   forgotPassword,
   resetPassword,
   checkAuth,
-  debugTokens
-  // Remove checkUsers for now to test basic functionality
+  debugTokens,
+  checkUsers  // ADD THIS
 } = require("./auth");
 const router = express.Router();
 
@@ -18,6 +18,6 @@ router.post("/reset-password", resetPassword);
 router.get("/dashboard", dashboard);
 router.get("/check-auth", checkAuth);
 router.get("/debug-tokens", debugTokens);
-// Remove this line temporarily: router.get("/check-users", checkUsers);
+router.get("/check-users", checkUsers);  // ADD THIS LINE
 
 module.exports = router;

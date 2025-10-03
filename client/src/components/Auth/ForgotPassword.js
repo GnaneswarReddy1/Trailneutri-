@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -13,7 +14,7 @@ const ForgotPassword = () => {
     setMessage("");
 
     try {
-      const response = await fetch("https://react-app-1-zmq6.onrender.com/api/forgot-password", {
+      const response = await fetch(`${API_BASE_URL}/api/forgot-password`,{
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

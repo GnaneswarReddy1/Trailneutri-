@@ -1,1 +1,5 @@
 .vercel
+client/node_modules/
+server/node_modules/
+.env
+.env.local
