@@ -31,13 +31,20 @@ const LOCAL_IP = getLocalIP();
 console.log('📡 Detected local IP address:', LOCAL_IP);
 
 // Configure CORS to allow mobile connections
-app.use(cors({
+/*app.use(cors({
   origin: [
     'http://localhost:3000',
     `http://${LOCAL_IP}:3000`,
     'http://localhost:3001',
     `http://${LOCAL_IP}:3001`
   ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));*/
+
+app.use(cors({
+  origin: "*", // Allowing all domains
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
