@@ -1,66 +1,17 @@
-const fs = require("fs");
-const path = require("path");
 const validator = require('validator');
 
-const usersFile = path.join(__dirname, "..", "users.json");
-const resetTokensFile = path.join(__dirname, "..", "resetTokens.json");
-
-// Helper functions for file management
-function readJSONFile(filePath, defaultData = []) {
-  try {
-    if (!fs.existsSync(filePath)) {
-      const defaultContent = JSON.stringify(defaultData, null, 2);
-      fs.writeFileSync(filePath, defaultContent);
-      return defaultData;
-    }
-    
-    const data = fs.readFileSync(filePath, "utf-8").trim();
-    if (!data) {
-      const defaultContent = JSON.stringify(defaultData, null, 2);
-      fs.writeFileSync(filePath, defaultContent);
-      return defaultData;
-    }
-    
-    const parsed = JSON.parse(data);
-    console.log(`📖 Read ${filePath}:`, Array.isArray(parsed) ? `${parsed.length} items` : 'Invalid format');
-    return Array.isArray(parsed) ? parsed : defaultData;
-  } catch (error) {
-    console.error(`❌ Error reading ${filePath}:`, error.message);
-    // Reset the file if it's corrupted
-    const defaultContent = JSON.stringify(defaultData, null, 2);
-    fs.writeFileSync(filePath, defaultContent);
-    return defaultData;
-  }
-}
-
-function writeJSONFile(filePath, data) {
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    
-    const content = JSON.stringify(data, null, 2);
-    fs.writeFileSync(filePath, content);
-    console.log(`💾 Written to ${filePath}:`, Array.isArray(data) ? `${data.length} items` : 'data');
-    return true;
-  } catch (error) {
-    console.error(`❌ Error writing to ${filePath}:`, error.message);
-    return false;
-  }
-}
+// In-memory storage (works on Render)
+let users = [];
+let resetTokens = [];
 
 // User management
 exports.findByEmail = (email) => {
-  const users = readJSONFile(usersFile);
   const user = users.find((u) => u && u.email === email);
   console.log(`🔍 User lookup for ${email}:`, user ? "FOUND" : "NOT FOUND");
   return user;
 };
 
 exports.addUser = (email, password, gender, height, weight, isVerified = true) => {
-  const users = readJSONFile(usersFile);
   const newUser = {
     id: Date.now().toString(),
     email,
@@ -68,56 +19,44 @@ exports.addUser = (email, password, gender, height, weight, isVerified = true) =
     gender: gender || "Not specified",
     height: height || "Not specified",
     weight: weight || "Not specified",
-    isVerified, // Always true now
+    isVerified,
     createdAt: new Date().toISOString()
   };
   
   users.push(newUser);
-  const success = writeJSONFile(usersFile, users);
-  if (success) {
-    console.log("✅ User added to database:", email);
-  } else {
-    console.log("❌ FAILED to add user to database");
-  }
+  console.log("✅ User added to memory:", email);
+  console.log("📊 Total users in memory:", users.length);
   return newUser;
 };
 
 exports.updateUser = (email, updates) => {
-  const users = readJSONFile(usersFile);
   const userIndex = users.findIndex((u) => u.email === email);
   
   if (userIndex !== -1) {
     users[userIndex] = { ...users[userIndex], ...updates };
-    const success = writeJSONFile(usersFile, users);
-    if (success) {
-      console.log("✅ User updated:", email);
-      console.log("📋 Updated fields:", updates);
-      return users[userIndex];
-    } else {
-      console.log("❌ FAILED to update user");
-    }
+    console.log("✅ User updated:", email);
+    console.log("📋 Updated fields:", updates);
+    return users[userIndex];
   } else {
     console.log("❌ User not found for update:", email);
   }
   return null;
 };
 
-// Password reset token management (simplified)
+// Password reset token management
 exports.saveResetToken = (email, token) => {
-  const tokens = readJSONFile(resetTokensFile);
-  const filteredTokens = tokens.filter((t) => t && t.email !== email);
+  const filteredTokens = resetTokens.filter((t) => t && t.email !== email);
   filteredTokens.push({ 
     email, 
     token, 
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
   });
-  writeJSONFile(resetTokensFile, filteredTokens);
+  resetTokens = filteredTokens;
 };
 
 exports.getResetToken = (token) => {
-  const tokens = readJSONFile(resetTokensFile);
-  const tokenData = tokens.find((t) => t && t.token === token);
+  const tokenData = resetTokens.find((t) => t && t.token === token);
   
   if (tokenData) {
     const now = new Date();
@@ -132,9 +71,7 @@ exports.getResetToken = (token) => {
 };
 
 exports.removeResetToken = (token) => {
-  const tokens = readJSONFile(resetTokensFile);
-  const filteredTokens = tokens.filter((t) => t && t.token !== token);
-  writeJSONFile(resetTokensFile, filteredTokens);
+  resetTokens = resetTokens.filter((t) => t && t.token !== token);
 };
 
 // Email validation
@@ -178,9 +115,6 @@ exports.validatePasswordStrength = (password) => {
 
 // Debug function to check current state
 exports.getDebugInfo = () => {
-  const users = readJSONFile(usersFile);
-  const resetTokens = readJSONFile(resetTokensFile);
-  
   return {
     users,
     resetTokens,
@@ -191,5 +125,23 @@ exports.getDebugInfo = () => {
 
 // New function to check all users
 exports.getAllUsers = () => {
-  return readJSONFile(usersFile);
+  return users;
+};
+
+// Add some test users for development
+exports.initializeTestUsers = () => {
+  // Add a test user if none exist
+  if (users.length === 0) {
+    users.push({
+      id: "test123",
+      email: "test@test.com",
+      password: "$2a$10$DQ3VULgddjDS2ZuuhGHM6e6YlGz80LjGINBC6x/TEOkYwrPM39Sr2", // Test123!
+      gender: "male",
+      height: "178",
+      weight: "70",
+      isVerified: true,
+      createdAt: new Date().toISOString()
+    });
+    console.log("✅ Test user added: test@test.com / Test123!");
+  }
 };

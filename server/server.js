@@ -3,6 +3,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
 const os = require("os");
+const User = require("./models/User"); // ADD THIS LINE
 
 const app = express();
 
@@ -30,19 +31,11 @@ const getLocalIP = () => {
 const LOCAL_IP = getLocalIP();
 console.log('📡 Detected local IP address:', LOCAL_IP);
 
-// Configure CORS to allow mobile connections
-/*app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    `http://${LOCAL_IP}:3000`,
-    'http://localhost:3001',
-    `http://${LOCAL_IP}:3001`
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));*/
+// Initialize test users for in-memory storage
+console.log('🔄 Initializing in-memory storage...');
+User.initializeTestUsers(); // ADD THIS LINE
 
+// Configure CORS to allow all connections
 app.use(cors({
   origin: "*", // Allowing all domains
   credentials: true,
@@ -60,7 +53,18 @@ app.get("/health", (req, res) => {
   res.json({ 
     status: "Server is running!",
     localUrl: `http://localhost:4000`,
-    mobileUrl: `http://${LOCAL_IP}:4000`
+    mobileUrl: `http://${LOCAL_IP}:4000`,
+    message: "Using in-memory storage - data persists until server restart"
+  });
+});
+
+// Debug endpoint to check current users
+app.get("/debug-users", (req, res) => {
+  const debugInfo = User.getDebugInfo();
+  res.json({
+    users: debugInfo.users,
+    userCount: debugInfo.userCount,
+    resetTokenCount: debugInfo.resetTokenCount
   });
 });
 
@@ -75,7 +79,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Mobile access: http://${LOCAL_IP}:${PORT}`);
   console.log(`🌐 Network access: http://0.0.0.0:${PORT}`);
   console.log('='.repeat(50));
-  console.log(`📝 On your mobile browser, visit: http://${LOCAL_IP}:3000`);
+  console.log('🧠 Using IN-MEMORY storage');
+  console.log('📊 Test user: test@test.com / Test123!');
   console.log('='.repeat(50));
 });
 

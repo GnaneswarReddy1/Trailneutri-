@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import PasswordStrengthMeter from "../Common/PasswordStrengthMeter";
 
 const SignupForm = () => {
+  // Use a single API base URL. Set REACT_APP_API_URL in your environment for production.
+  const API_BASE = process.env.REACT_APP_API_URL || "http://10.0.0.2:4000";
   const [formData, setFormData] = useState({
     email: "",
     password: "",
