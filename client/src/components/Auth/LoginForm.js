@@ -50,7 +50,7 @@ const LoginForm = ({ onLogin }) => {
     setMessage("");
 
     try {
-      const response = await fetch("http://10.0.0.2:4000/api/login", {
+      const response = await fetch("https://react-app-39ex.onrender.com/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
