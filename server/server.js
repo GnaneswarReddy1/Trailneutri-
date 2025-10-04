@@ -3,7 +3,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
 const os = require("os");
-const User = require("./models/User"); // ADD THIS LINE
+const User = require("./models/User");
 
 const app = express();
 
@@ -33,11 +33,11 @@ console.log('📡 Detected local IP address:', LOCAL_IP);
 
 // Initialize test users for in-memory storage
 console.log('🔄 Initializing in-memory storage...');
-User.initializeTestUsers(); // ADD THIS LINE
+User.initializeTestUsers();
 
 // Configure CORS to allow all connections
 app.use(cors({
-  origin: "*", // Allowing all domains
+  origin: process.env.CORS_ORIGIN || "*", // Use environment variable
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -52,8 +52,8 @@ app.use("/api", routes);
 app.get("/health", (req, res) => {
   res.json({ 
     status: "Server is running!",
-    localUrl: `http://localhost:4000`,
-    mobileUrl: `http://${LOCAL_IP}:4000`,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
     message: "Using in-memory storage - data persists until server restart"
   });
 });
@@ -68,9 +68,25 @@ app.get("/debug-users", (req, res) => {
   });
 });
 
-const PORT = 4000;
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "Authentication API Server is running!",
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: "/health",
+      signup: "/api/signup",
+      login: "/api/login",
+      dashboard: "/api/dashboard",
+      debug: "/debug-users"
+    }
+  });
+});
 
-// Listen on all network interfaces (0.0.0.0 means accept connections from any IP)
+// ✅ FIX: Use environment variable for port (required by Render)
+const PORT = process.env.PORT || 4000;
+
+// Listen on all network interfaces
 app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log('🚀 SERVER STARTED SUCCESSFULLY');
@@ -78,6 +94,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`💻 Local access: http://localhost:${PORT}`);
   console.log(`📱 Mobile access: http://${LOCAL_IP}:${PORT}`);
   console.log(`🌐 Network access: http://0.0.0.0:${PORT}`);
+  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('='.repeat(50));
   console.log('🧠 Using IN-MEMORY storage');
   console.log('📊 Test user: test@test.com / Test123!');
