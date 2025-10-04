@@ -14,14 +14,10 @@ const TOKEN_EXPIRY = "24h"; // token valid for 24 hours
 // ===============================
 
 // Generate JWT
-const generateJwt = (payload) => {
-  return jwt.sign(payload, SECRET_KEY, { expiresIn: TOKEN_EXPIRY });
-};
+const generateJwt = (payload) => jwt.sign(payload, SECRET_KEY, { expiresIn: TOKEN_EXPIRY });
 
 // Verify JWT safely
-const verifyJwt = (token) => {
-  return jwt.verify(token, SECRET_KEY);
-};
+const verifyJwt = (token) => jwt.verify(token, SECRET_KEY);
 
 // Extract token from "Authorization" header
 const extractToken = (req) => {
@@ -34,7 +30,7 @@ const extractToken = (req) => {
 };
 
 // ===============================
-// Signup
+// 📝 Signup
 // ===============================
 exports.signup = async (req, res) => {
   try {
@@ -43,6 +39,7 @@ exports.signup = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
+
     if (!User.isValidEmail(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
@@ -55,26 +52,28 @@ exports.signup = async (req, res) => {
       });
     }
 
-    const existingUser = User.findByEmail(email);
+    // Check existing user (PostgreSQL async)
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash password and save user
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    User.addUser(email, hashedPassword, gender, height, weight, true);
+    await User.addUser(email, hashedPassword, gender, height, weight, true);
 
     res.status(201).json({
       message: "Signup successful! You can now login.",
       success: true,
     });
   } catch (err) {
+    console.error("❌ Signup error:", err);
     res.status(500).json({ message: "Error signing up: " + err.message });
   }
 };
 
 // ===============================
-// Login
+// 🔐 Login
 // ===============================
 exports.login = async (req, res) => {
   try {
@@ -84,7 +83,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = User.findByEmail(email);
+    const user = await User.findByEmail(email);
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -106,28 +105,29 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("❌ Login error:", err);
     res.status(500).json({ message: "Error logging in: " + err.message });
   }
 };
 
 // ===============================
-// Dashboard (protected)
+// 📊 Dashboard (Protected Route)
 // ===============================
-exports.dashboard = (req, res) => {
+exports.dashboard = async (req, res) => {
   try {
     const token = extractToken(req);
     if (!token) return res.status(401).json({ message: "No token provided" });
 
     const decoded = verifyJwt(token);
+    const user = await User.findByEmail(decoded.email);
 
-    const user = User.findByEmail(decoded.email);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     res.json({
       user: {
-        email: user.email || "Not provided",
+        email: user.email,
         gender: user.gender || "Not specified",
         height: user.height || "Not specified",
         weight: user.weight || "Not specified",
@@ -135,6 +135,7 @@ exports.dashboard = (req, res) => {
       message: "Dashboard data retrieved successfully",
     });
   } catch (err) {
+    console.error("❌ Dashboard error:", err.message);
     if (err.name === "JsonWebTokenError") {
       return res.status(401).json({ message: "Invalid token" });
     }
@@ -146,31 +147,29 @@ exports.dashboard = (req, res) => {
 };
 
 // ===============================
-// Forgot Password
+// 🔁 Forgot Password (Stub)
 // ===============================
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
 
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    const user = User.findByEmail(email);
+    const user = await User.findByEmail(email);
     if (!user) {
-      // Don’t reveal whether user exists
+      // Don’t reveal whether the email exists
       return res.json({ message: "If the email exists, a reset link has been sent" });
     }
 
     console.log("✅ Password reset requested for:", email);
     res.json({ message: "If the email exists, a reset link has been sent" });
   } catch (err) {
+    console.error("❌ Forgot password error:", err);
     res.status(500).json({ message: "Error processing request" });
   }
 };
 
 // ===============================
-// Reset Password
+// 🔑 Reset Password (Stub)
 // ===============================
 exports.resetPassword = async (req, res) => {
   try {
@@ -195,20 +194,21 @@ exports.resetPassword = async (req, res) => {
       message: "Password reset successfully! You can now login with your new password.",
     });
   } catch (err) {
+    console.error("❌ Reset password error:", err);
     res.status(500).json({ message: "Error resetting password" });
   }
 };
 
 // ===============================
-// Check Auth
+// 🧠 Check Auth
 // ===============================
-exports.checkAuth = (req, res) => {
+exports.checkAuth = async (req, res) => {
   try {
     const token = extractToken(req);
     if (!token) return res.status(401).json({ message: "No token provided" });
 
     const decoded = verifyJwt(token);
-    const user = User.findByEmail(decoded.email);
+    const user = await User.findByEmail(decoded.email);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -224,27 +224,24 @@ exports.checkAuth = (req, res) => {
       },
     });
   } catch (err) {
+    console.error("❌ Auth check error:", err);
     res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
 // ===============================
-// Debug Endpoints
+// 🧩 Debug Endpoints (Optional)
 // ===============================
 exports.debugTokens = (req, res) => {
-  try {
-    const debugInfo = User.getDebugInfo();
-    res.json(debugInfo);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json({ message: "Debug not implemented for PostgreSQL" });
 };
 
-exports.checkUsers = (req, res) => {
+exports.checkUsers = async (req, res) => {
   try {
-    const users = User.getAllUsers();
-    res.json({ users, count: users.length });
+    const result = await User.getAllUsers();
+    res.json({ users: result, count: result.length });
   } catch (err) {
+    console.error("❌ Check users error:", err);
     res.status(500).json({ error: err.message });
   }
 };

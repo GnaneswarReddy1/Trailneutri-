@@ -68,7 +68,7 @@ const LoginForm = ({ onLogin }) => {
       if (response.ok && data.token && data.user) {
         setMessage("✅ Login successful!");
         setMessageType("success");
-        onLogin(data.token, data.user, formData.rememberMe);
+        onLogin(data.token, data.user, formData.remembxerMe);
        // Redirect to dashboard with success message
         setTimeout(() => {
           navigate("/dashboard", { 
