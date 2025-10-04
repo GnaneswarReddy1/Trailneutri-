@@ -2,34 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const routes = require("./routes");
-const os = require("os");
 const User = require("./models/User");
 
 const app = express();
-
-// Function to get your computer's local IP address
-const getLocalIP = () => {
-  const networkInterfaces = os.networkInterfaces();
-  
-  for (const interfaceName in networkInterfaces) {
-    const interfaces = networkInterfaces[interfaceName];
-    for (const iface of interfaces) {
-      // Skip internal and non-IPv4 addresses
-      if (iface.family === 'IPv4' && !iface.internal) {
-        // Check if it's a local network IP (common patterns)
-        if (iface.address.startsWith('192.168.') || 
-            iface.address.startsWith('10.0.') || 
-            iface.address.startsWith('172.')) {
-          return iface.address;
-        }
-      }
-    }
-  }
-  return 'localhost'; // Fallback
-};
-
-const LOCAL_IP = getLocalIP();
-console.log('📡 Detected local IP address:', LOCAL_IP);
 
 // Initialize test users for in-memory storage
 console.log('🔄 Initializing in-memory storage...');
@@ -37,7 +12,7 @@ User.initializeTestUsers();
 
 // Configure CORS to allow all connections
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "*", // Use environment variable
+  origin: process.env.CORS_ORIGIN || "*",
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -54,6 +29,7 @@ app.get("/health", (req, res) => {
     status: "Server is running!",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || 4000,
     message: "Using in-memory storage - data persists until server restart"
   });
 });
@@ -83,7 +59,20 @@ app.get("/", (req, res) => {
   });
 });
 
-// ✅ FIX: Use environment variable for port (required by Render)
+// All other API routes
+app.post("/api/signup", (req, res) => {
+  res.json({ message: "Signup endpoint - check routes.js" });
+});
+
+app.post("/api/login", (req, res) => {
+  res.json({ message: "Login endpoint - check routes.js" });
+});
+
+app.get("/api/dashboard", (req, res) => {
+  res.json({ message: "Dashboard endpoint - check routes.js" });
+});
+
+// ✅ FIX: Use environment variable for port (Render uses port 10000)
 const PORT = process.env.PORT || 4000;
 
 // Listen on all network interfaces
@@ -91,10 +80,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log('🚀 SERVER STARTED SUCCESSFULLY');
   console.log('='.repeat(50));
-  console.log(`💻 Local access: http://localhost:${PORT}`);
-  console.log(`📱 Mobile access: http://${LOCAL_IP}:${PORT}`);
-  console.log(`🌐 Network access: http://0.0.0.0:${PORT}`);
+  console.log(`🚀 Server running on port: ${PORT}`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'All origins allowed'}`);
   console.log('='.repeat(50));
   console.log('🧠 Using IN-MEMORY storage');
   console.log('📊 Test user: test@test.com / Test123!');
