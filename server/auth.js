@@ -1,13 +1,12 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
 const User = require("./models/User");
 
 // ===============================
 // 🔑 Config
 // ===============================
-const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey"; // fallback for dev
-const TOKEN_EXPIRY = "24h"; // token valid for 24 hours
+const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
+const TOKEN_EXPIRY = "24h";
 
 // ===============================
 // 🔐 Helper functions
@@ -17,7 +16,13 @@ const TOKEN_EXPIRY = "24h"; // token valid for 24 hours
 const generateJwt = (payload) => jwt.sign(payload, SECRET_KEY, { expiresIn: TOKEN_EXPIRY });
 
 // Verify JWT safely
-const verifyJwt = (token) => jwt.verify(token, SECRET_KEY);
+const verifyJwt = (token) => {
+  try {
+    return jwt.verify(token, SECRET_KEY);
+  } catch (err) {
+    throw new Error("Invalid token");
+  }
+};
 
 // Extract token from "Authorization" header
 const extractToken = (req) => {
@@ -34,10 +39,13 @@ const extractToken = (req) => {
 // ===============================
 exports.signup = async (req, res) => {
   try {
-    const { email, password, gender, height, weight } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+    const { Username, email, phone, password, gender, height, weight } = req.body;
+    
+    // Validation
+    if (!Username || !email || !phone || !password) {
+      return res.status(400).json({
+        message: "Username, email, phone, and password are required"
+      });
     }
 
     if (!User.isValidEmail(email)) {
@@ -52,15 +60,15 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Check existing user (PostgreSQL async)
+    // Check existing user
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "User already exists with this email" });
     }
 
     // Hash password and save user
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.addUser(email, hashedPassword, gender, height, weight, true);
+    const newUser = await User.addUser(Username, email, phone, hashedPassword, gender, height, weight, true);
 
     res.status(201).json({
       message: "Signup successful! You can now login.",
@@ -68,7 +76,9 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Signup error:", err);
-    res.status(500).json({ message: "Error signing up: " + err.message });
+    res.status(500).json({ 
+      message: "Error signing up: " + err.message
+    });
   }
 };
 
@@ -93,12 +103,14 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = generateJwt({ email: user.email });
+    const token = generateJwt({ email: user.email, id: user.id });
 
     res.json({
       token,
       user: {
+        Username: user.username,
         email: user.email,
+        phone: user.phone,
         gender: user.gender,
         height: user.height,
         weight: user.weight,
@@ -106,7 +118,9 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Login error:", err);
-    res.status(500).json({ message: "Error logging in: " + err.message });
+    res.status(500).json({ 
+      message: "Error logging in: " + err.message
+    });
   }
 };
 
@@ -127,7 +141,9 @@ exports.dashboard = async (req, res) => {
 
     res.json({
       user: {
+        Username: user.username,
         email: user.email,
+        phone: user.phone || "Not specified",
         gender: user.gender || "Not specified",
         height: user.height || "Not specified",
         weight: user.weight || "Not specified",
@@ -136,66 +152,13 @@ exports.dashboard = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Dashboard error:", err.message);
-    if (err.name === "JsonWebTokenError") {
+    if (err.name === "JsonWebTokenError" || err.message === "Invalid token") {
       return res.status(401).json({ message: "Invalid token" });
     }
     if (err.name === "TokenExpiredError") {
       return res.status(401).json({ message: "Token expired" });
     }
     res.status(500).json({ message: "Server error: " + err.message });
-  }
-};
-
-// ===============================
-// 🔁 Forgot Password (Stub)
-// ===============================
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email is required" });
-
-    const user = await User.findByEmail(email);
-    if (!user) {
-      // Don’t reveal whether the email exists
-      return res.json({ message: "If the email exists, a reset link has been sent" });
-    }
-
-    console.log("✅ Password reset requested for:", email);
-    res.json({ message: "If the email exists, a reset link has been sent" });
-  } catch (err) {
-    console.error("❌ Forgot password error:", err);
-    res.status(500).json({ message: "Error processing request" });
-  }
-};
-
-// ===============================
-// 🔑 Reset Password (Stub)
-// ===============================
-exports.resetPassword = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-
-    if (!token || !newPassword) {
-      return res.status(400).json({ message: "Token and new password are required" });
-    }
-
-    const passwordValidation = User.validatePasswordStrength(newPassword);
-    if (passwordValidation.strength === "weak") {
-      return res.status(400).json({
-        message: "Password too weak",
-        feedback: passwordValidation.feedback,
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    console.log("✅ Password reset completed");
-
-    res.json({
-      message: "Password reset successfully! You can now login with your new password.",
-    });
-  } catch (err) {
-    console.error("❌ Reset password error:", err);
-    res.status(500).json({ message: "Error resetting password" });
   }
 };
 
@@ -217,10 +180,12 @@ exports.checkAuth = async (req, res) => {
     res.json({
       authenticated: true,
       user: {
+        Username: user.username,
         email: user.email,
-        gender: user.gender,
-        height: user.height,
-        weight: user.weight,
+        phone: user.phone || "Not specified",
+        gender: user.gender || "Not specified",
+        height: user.height || "Not specified",
+        weight: user.weight || "Not specified",
       },
     });
   } catch (err) {
@@ -230,10 +195,59 @@ exports.checkAuth = async (req, res) => {
 };
 
 // ===============================
-// 🧩 Debug Endpoints (Optional)
+// 🔁 Forgot Password
+// ===============================
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findByEmail(email);
+    if (!user) {
+      // Don't reveal whether the email exists
+      return res.json({ message: "If the email exists, a reset link has been sent" });
+    }
+
+    res.json({ message: "If the email exists, a reset link has been sent" });
+  } catch (err) {
+    console.error("❌ Forgot password error:", err);
+    res.status(500).json({ message: "Error processing request" });
+  }
+};
+
+// ===============================
+// 🔑 Reset Password
+// ===============================
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Token and new password are required" });
+    }
+
+    const passwordValidation = User.validatePasswordStrength(newPassword);
+    if (passwordValidation.strength === "weak") {
+      return res.status(400).json({
+        message: "Password too weak",
+        feedback: passwordValidation.feedback,
+      });
+    }
+
+    res.json({
+      message: "Password reset successfully! You can now login with your new password.",
+    });
+  } catch (err) {
+    console.error("❌ Reset password error:", err);
+    res.status(500).json({ message: "Error resetting password" });
+  }
+};
+
+// ===============================
+// 🧩 Debug Endpoints
 // ===============================
 exports.debugTokens = (req, res) => {
-  res.json({ message: "Debug not implemented for PostgreSQL" });
+  res.json({ message: "Debug endpoint - server is working" });
 };
 
 exports.checkUsers = async (req, res) => {

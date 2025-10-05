@@ -4,6 +4,20 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
   const [showAccount, setShowAccount] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // DEBUG: Check what user data you're receiving
+  useEffect(() => {
+    console.log("🔍 Dashboard received userInfo:", userInfo);
+    console.log("🔍 Available user properties:", Object.keys(userInfo || {}));
+    
+    // Simulate loading completion
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [userInfo]);
 
   useEffect(() => {
     // Inject responsive styles for mobile hamburger and menu
@@ -42,9 +56,31 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
     return `${feet}'${inches}"`;
   };
 
-  // Safe user data access
+  // Safe user data access - FIXED VERSION
+  const getUserUsername = () => {
+    if (!userInfo) return "User";
+    
+    // Check all possible username fields
+    const username = userInfo.username || userInfo.Username || userInfo.userName;
+    
+    if (username && username !== userInfo.email) {
+      return username;
+    }
+    
+    // Extract username from email (everything before @)
+    if (userInfo.email) {
+      return userInfo.email.split('@')[0];
+    }
+    
+    return "User";
+  };
+  
   const getUserEmail = () => {
-    return userInfo?.email || "User";
+    return userInfo?.email || "Not specified";
+  };
+
+  const getUserPhone = () => {
+    return userInfo?.phone || "Not specified";
   };
 
   const getUserGender = () => {
@@ -58,6 +94,37 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
   const getUserWeight = () => {
     return userInfo?.weight || "Not specified";
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div style={dashboardStyle}>
+        <div style={contentStyle}>
+          <div style={loadingStyle}>
+            <div style={spinnerStyle}></div>
+            <p>Loading your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if no user data
+  if (!userInfo) {
+    return (
+      <div style={dashboardStyle}>
+        <div style={contentStyle}>
+          <div style={errorStyle}>
+            <h2>No User Data Available</h2>
+            <p>Please log in again to access your dashboard.</p>
+            <button onClick={onLogout} style={logoutButtonStyle}>
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={dashboardStyle}>
@@ -113,7 +180,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
         <div style={welcomeSectionStyle}>
           <div style={welcomeContentStyle}>
             <h1 style={welcomeTitleStyle}>
-              Welcome, <span style={highlightStyle}>{getUserEmail()}</span>
+              Welcome, <span style={highlightStyle}>{getUserUsername()}</span>
             </h1>
             <p style={welcomeSubtitleStyle}>
               Your health journey starts here. Manage your profile and access healthcare services.
@@ -139,10 +206,26 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
             
             <div style={infoGridStyle}>
               <div style={infoCardStyle}>
+                <div style={infoIconStyle}>👤</div>
+                <div>
+                  <h3 style={infoLabelStyle}>Username</h3>
+                  <p style={infoValueStyle}>{getUserUsername()}</p>
+                </div>
+              </div>
+
+              <div style={infoCardStyle}>
                 <div style={infoIconStyle}>📧</div>
                 <div>
                   <h3 style={infoLabelStyle}>Email</h3>
                   <p style={infoValueStyle}>{getUserEmail()}</p>
+                </div>
+              </div>
+
+              <div style={infoCardStyle}>
+                <div style={infoIconStyle}>📞</div>
+                <div>
+                  <h3 style={infoLabelStyle}>Phone</h3>
+                  <p style={infoValueStyle}>{getUserPhone()}</p>
                 </div>
               </div>
               
@@ -214,7 +297,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
   );
 };
 
-// Styles (keep all your existing styles exactly as they are)
+// Styles
 const dashboardStyle = {
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
@@ -459,6 +542,36 @@ const actionTextStyle = {
   fontSize: '0.9rem',
   color: '#718096',
   margin: 0,
+};
+
+// Loading and Error Styles
+const loadingStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '4rem',
+  background: 'white',
+  borderRadius: '15px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+};
+
+const spinnerStyle = {
+  width: '40px',
+  height: '40px',
+  border: '4px solid #f3f3f3',
+  borderTop: '4px solid #00695c',
+  borderRadius: '50%',
+  animation: 'spin 1s linear infinite',
+  marginBottom: '1rem',
+};
+
+const errorStyle = {
+  textAlign: 'center',
+  padding: '4rem',
+  background: 'white',
+  borderRadius: '15px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
 };
 
 export default Dashboard;

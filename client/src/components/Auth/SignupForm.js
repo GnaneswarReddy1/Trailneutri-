@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordStrengthMeter from "../Common/PasswordStrengthMeter";
+import countryCodes from "../../data/countryCodes";
 
 // API configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE_URL = "http://localhost:4000";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
+    Username: "",
     email: "",
+    countryCode: "+1",
+    phone: "",
     password: "",
     confirmPassword: "",
     gender: "",
@@ -39,11 +43,53 @@ const SignupForm = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
+  // Convert ISO country code (e.g. 'US') to emoji flag
+  const getFlagEmoji = (isoCode) => {
+    if (!isoCode) return '';
+    try {
+      const codePoints = isoCode.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0));
+      return String.fromCodePoint(...codePoints);
+    } catch {
+      return '';
+    }
+  };
+
+  // Format phone as (123)-456-7890 as user types (US-style 10-digit formatting)
+  const formatphone = (digits) => {
+    const d = digits.replace(/\D/g, '').slice(0, 10);
+    if (d.length === 0) return '';
+    if (d.length <= 3) return `(${d}`;
+    if (d.length <= 6) return `(${d.slice(0,3)})-${d.slice(3)}`;
+    return `(${d.slice(0,3)})-${d.slice(3,6)}-${d.slice(6,10)}`;
+  };
+
+  const handlephoneChange = (e) => {
+    const raw = e.target.value;
+    const digits = raw.replace(/\D/g, '').slice(0, 10);
+    const formatted = formatphone(digits);
+    setFormData(prev => ({ ...prev, phone: formatted }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
+    // Basic validation
+    const phoneDigits = (formData.phone || '').replace(/\D/g, '');
+    if (!formData.Username || !formData.email || !formData.password) {
+      setMessage("❌ Please fill in all required fields");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
+    // Require phone of 10 digits
+    if (phoneDigits.length !== 10) {
+      setMessage("❌ Please enter a valid 10-digit phone number");
+      setMessageType("error");
+      setLoading(false);
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Passwords do not match");
       setMessageType("error");
@@ -65,11 +111,14 @@ const SignupForm = () => {
     }
 
     const userData = {
+      Username: formData.Username,
       email: formData.email,
       password: formData.password,
       gender: formData.gender,
       height: heightInCm || "",
       weight: weightInKg || "",
+      phone: `${formData.countryCode}${phoneDigits}`,
+      phoneFormatted: formData.phone,
     };
 
     try {
@@ -87,7 +136,10 @@ const SignupForm = () => {
         
         // Clear form
         setFormData({
+          Username: "",
           email: "",
+          countryCode: "+1",
+          phone: "",
           password: "",
           confirmPassword: "",
           gender: "",
@@ -146,6 +198,21 @@ const SignupForm = () => {
         )}
 
         <form onSubmit={handleSubmit} style={formStyle}>
+          {/* Username */}
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Username</label>
+            <input
+              type="text"
+              name="Username"
+              placeholder="Enter your username"
+              value={formData.Username}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+              disabled={loading}
+            />
+          </div>
+
           {/* Email */}
           <div style={inputGroupStyle}>
             <label style={labelStyle}>Email Address</label>
@@ -157,7 +224,45 @@ const SignupForm = () => {
               onChange={handleChange}
               required
               style={inputStyle}
+              disabled={loading}
             />
+          </div>
+
+          {/* Phone (country code + formatted number) */}
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Phone Number</label>
+            <div style={phoneRowStyle}>
+              <div style={countrySelectInline}>
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  {/* Native select with full labels for the dropdown */}
+                  <select
+                    name="countryCode"
+                    value={formData.countryCode}
+                    onChange={handleChange}
+                    style={{ ...selectStyle, ...nativeSelectStyle }}
+                    disabled={loading}
+                  >
+                    {countryCodes.map(c => (
+                      <option key={c.code} value={c.dial_code} title={c.name}>{`${getFlagEmoji(c.code)} ${c.name} (${c.dial_code})`}</option>
+                    ))}
+                  </select>
+
+                  {/* Visible compact display: only the dial code */}
+                  <div style={countryDisplayStyle} aria-hidden>{formData.countryCode}</div>
+                  <span style={{ ...selectArrowStyle, right: '8px' }}>▼</span>
+                </div>
+              </div>
+              <input
+                type="text"
+                name="phone"
+                placeholder="(123)-456-7890"
+                value={formData.phone}
+                onChange={handlephoneChange}
+                required
+                style={phoneInputStyle}
+                disabled={loading}
+              />
+            </div>
           </div>
 
           {/* Password */}
@@ -172,12 +277,14 @@ const SignupForm = () => {
                 onChange={handleChange}
                 required
                 style={{ ...inputStyle, paddingRight: '45px' }}
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
                 style={passwordToggleStyle}
                 title={showPassword ? "Hide password" : "Show password"}
+                disabled={loading}
               >
                 <span style={passwordIconStyle}>
                   {showPassword ? "🔓" : "🔒"}
@@ -199,12 +306,14 @@ const SignupForm = () => {
                 onChange={handleChange}
                 required
                 style={{ ...inputStyle, paddingRight: '45px' }}
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={toggleConfirmPasswordVisibility}
                 style={passwordToggleStyle}
                 title={showConfirmPassword ? "Hide password" : "Show password"}
+                disabled={loading}
               >
                 <span style={passwordIconStyle}>
                   {showConfirmPassword ? "🔓" : "🔒"}
@@ -224,6 +333,7 @@ const SignupForm = () => {
                 required
                 style={selectStyle}
                 className="custom-select"
+                disabled={loading}
               >
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
@@ -249,6 +359,7 @@ const SignupForm = () => {
                     required
                     style={selectSmallStyle}
                     className="custom-select"
+                    disabled={loading}
                   >
                     <option value="">Feet</option>
                     {[...Array(8)].map((_, i) => {
@@ -266,6 +377,7 @@ const SignupForm = () => {
                     required
                     style={selectSmallStyle}
                     className="custom-select"
+                    disabled={loading}
                   >
                     <option value="">Inches</option>
                     {[...Array(12)].map((_, i) => (
@@ -292,6 +404,7 @@ const SignupForm = () => {
                   style={weightInputStyle}
                   min="1"
                   max="1000"
+                  disabled={loading}
                 />
                 <div style={unitSelectContainerStyle}>
                   <select
@@ -300,6 +413,7 @@ const SignupForm = () => {
                     onChange={handleChange}
                     style={unitSelectStyle}
                     className="custom-select"
+                    disabled={loading}
                   >
                     <option value="kg">kg</option>
                     <option value="lbs">lbs</option>
@@ -343,9 +457,9 @@ const SignupForm = () => {
   );
 };
 
-// Styles (keep all your existing styles exactly as they are)
+// Styles
 const containerStyle = {
-  minHeight: '10vh',
+  minHeight: '100vh',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -356,7 +470,7 @@ const containerStyle = {
 const cardStyle = {
   background: 'white',
   borderRadius: '15px',
-  padding: '1.5rem',
+  padding: '2rem',
   boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
   width: '100%',
   maxWidth: '450px',
@@ -365,7 +479,7 @@ const cardStyle = {
 
 const headerStyle = {
   textAlign: 'center',
-  marginBottom: '1rem',
+  marginBottom: '1.5rem',
 };
 
 const logoStyle = {
@@ -373,11 +487,11 @@ const logoStyle = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: '0.5rem',
-  marginBottom: '0rem',
+  marginBottom: '0.5rem',
 };
 
 const logoIcon = {
-  fontSize: '1.5rem',
+  fontSize: '2rem',
 };
 
 const logoText = {
@@ -394,13 +508,13 @@ const titleStyle = {
   fontSize: '1.5rem',
   fontWeight: '600',
   color: '#2d3748',
-  margin: 0,
+  margin: '0.5rem 0',
 };
 
 const formStyle = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '0.3rem',
+  gap: '1rem',
 };
 
 const inputGroupStyle = {
@@ -419,7 +533,7 @@ const measurementsContainerStyle = {
 const measurementGroupStyle = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '0rem',
+  gap: '0.5rem',
   justifyContent: 'flex-start',
 };
 
@@ -478,7 +592,6 @@ const unitSelectContainerStyle = {
   minWidth: '60px',
 };
 
-// Special container for the two height selects so they share the row
 const heightSelectContainerStyle = {
   position: 'relative',
   flex: 1,
@@ -527,6 +640,53 @@ const selectArrowStyle = {
   pointerEvents: 'none',
   color: '#718096',
   fontSize: '0.8rem',
+};
+
+const phoneRowStyle = {
+  display: 'flex',
+  gap: '0.5rem',
+  alignItems: 'center'
+};
+
+// Make the country select compact so the phone input remains the large field
+const countrySelectInline = {
+  position: 'relative',
+  width: '80px',
+  minWidth: '60px',
+  display: 'inline-block'
+};
+// native select sits on top but is invisible so users get the full dropdown
+const nativeSelectStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  opacity: 0,
+  zIndex: 3,
+  cursor: 'pointer'
+};
+
+// compact visible overlay that shows only the dial code
+const countryDisplayStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '10px',
+  transform: 'translateY(-50%)',
+  zIndex: 2,
+  color: '#2d3748',
+  fontWeight: 600,
+};
+const phoneInputStyle = {
+  padding: '0.75rem',
+  borderRadius: '8px',
+  border: '2px solid #e2e8f0',
+  fontSize: '0.9rem',
+  transition: 'all 0.2s ease',
+  outline: 'none',
+  flex: 1,
+  boxSizing: 'border-box',
+  fontFamily: 'inherit'
 };
 
 const heightContainerStyle = {

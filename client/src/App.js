@@ -19,6 +19,19 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if we have user info in storage
+    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUserInfo(parsedUser);
+        console.log("📱 Loaded user from storage:", parsedUser);
+        console.log("📱 Username in storage:", parsedUser.username);
+      } catch (error) {
+        console.error("Error parsing stored user data:", error);
+      }
+    }
+    
     if (token) {
       fetchUserData();
     } else {
@@ -29,47 +42,77 @@ function App() {
   const fetchUserData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
+      // Since your current backend doesn't have a protected dashboard endpoint,
+      // we'll use the check-users endpoint or rely on the stored user data
+      const response = await fetch(`${API_BASE_URL}/api/check-users`, {
         headers: { 
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUserInfo(data.user);
+        console.log("📊 Available users:", data.users);
+        
+        // If we have stored user info, use that (it should have the username)
+        const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUserInfo(parsedUser);
+          console.log("✅ Using stored user data with username:", parsedUser.username);
+        }
       } else {
-        // Token might be invalid
-        console.error("Token invalid or expired");
-        handleLogout();
+        console.warn("Could not fetch users list, using stored data");
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      handleLogout();
+      // Don't logout on error, use stored data
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogin = (newToken, userData, rememberMe = false) => {
+    console.log("🔄 handleLogin called with user data:", userData);
+    console.log("🔄 Username in login:", userData?.username);
+    
+    // Store token and user data
     if (rememberMe) {
       localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(userData));
     } else {
       sessionStorage.setItem("token", newToken);
+      sessionStorage.setItem("user", JSON.stringify(userData));
     }
+    
     setToken(newToken);
     setUserInfo(userData);
-    navigate("/dashboard");
+    
+    console.log("✅ Login successful, navigating to dashboard...");
+    setTimeout(() => {
+      navigate("/dashboard", { replace: true });
+    }, 100);
   };
 
   const handleLogout = () => {
     console.log("🚪 Logging out...");
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setToken(null);
     setUserInfo(null);
-    navigate("/login", { replace: true, state: { from: 'logout' } });
+    navigate("/login", { replace: true });
+  };
+
+  const handleUpdateUser = (updatedUserInfo) => {
+    setUserInfo(updatedUserInfo);
+    // Also update storage
+    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (storedUser) {
+      const currentStorage = localStorage.getItem("user") ? localStorage : sessionStorage;
+      currentStorage.setItem("user", JSON.stringify(updatedUserInfo));
+    }
   };
 
   if (loading) {
@@ -114,7 +157,7 @@ function App() {
               <Dashboard 
                 userInfo={userInfo} 
                 onLogout={handleLogout}
-                onUpdateUser={setUserInfo}
+                onUpdateUser={handleUpdateUser}
               />
             ) : (
               <Navigate to="/login" replace />

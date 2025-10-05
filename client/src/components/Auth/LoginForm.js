@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 // API configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+const API_BASE_URL = "http://localhost:4000";
 
 const LoginForm = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -22,17 +22,8 @@ const LoginForm = ({ onLogin }) => {
     if (location.state?.from === 'signup' && location.state?.message) {
       setMessage("✅ " + location.state.message);
       setMessageType("success");
-      
-      // Clear the location state so message doesn't show again on refresh
       window.history.replaceState({}, document.title);
     }
-    
-    // Reset form when component mounts
-    setFormData({
-      email: "",
-      password: "",
-      rememberMe: false
-    });
   }, [location]);
 
   const handleChange = (e) => {
@@ -63,23 +54,27 @@ const LoginForm = ({ onLogin }) => {
       });
 
       const data = await response.json();
-      console.log("Login response:", data);
 
       if (response.ok && data.token && data.user) {
-        setMessage("✅ Login successful!");
+        setMessage("✅ Login successful! Redirecting...");
         setMessageType("success");
+        
+        // Store token immediately in storage first
+        if (formData.rememberMe) {
+          localStorage.setItem("token", data.token);
+        } else {
+          sessionStorage.setItem("token", data.token);
+        }
+        
+        // Call onLogin to update App.js state
         onLogin(data.token, data.user, formData.rememberMe);
-       // Redirect to dashboard with success message
+        
+        // Wait a brief moment to ensure state is updated, then navigate
         setTimeout(() => {
-          navigate("/dashboard", { 
-            state: { 
-              from: 'signup',
-              message: "You've logged in successfully!"
-            } 
-          });
-        }, 1500);
-    
-    } else {
+          navigate("/dashboard", { replace: true });
+        }, 100);
+        
+      } else {
         setMessage("❌ " + (data.message || "Login failed"));
         setMessageType("error");
       }
@@ -125,6 +120,7 @@ const LoginForm = ({ onLogin }) => {
               onChange={handleChange}
               required
               style={inputStyle}
+              disabled={loading}
             />
           </div>
 
@@ -144,12 +140,14 @@ const LoginForm = ({ onLogin }) => {
                 onChange={handleChange}
                 required
                 style={{ ...inputStyle, paddingRight: '45px' }}
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
                 style={passwordToggleStyle}
                 title={showPassword ? "Hide password" : "Show password"}
+                disabled={loading}
               >
                 <span style={passwordIconStyle}>
                   {showPassword ? "🔓" : "🔒"}
@@ -165,6 +163,7 @@ const LoginForm = ({ onLogin }) => {
               checked={formData.rememberMe}
               onChange={handleChange}
               style={checkboxStyle}
+              disabled={loading}
             />
             Remember me
           </label>
@@ -202,7 +201,7 @@ const LoginForm = ({ onLogin }) => {
   );
 };
 
-// Styles (keep your existing styles exactly as they are)
+// Styles (keep all your existing styles exactly as they are)
 const containerStyle = {
   minHeight: '100vh',
   display: 'flex',
