@@ -87,7 +87,7 @@ exports.addUser = async (username, email, phone, password, gender, height, weigh
       `INSERT INTO users (username, email, phone, password, gender, height, weight, is_verified)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [username, email, phone, password, gender || "Not specified", height, weight, isVerified]
+      [username, email, phone, password, gender, height, weight, isVerified]
     );
     return result.rows[0];
   } catch (err) {
