@@ -71,9 +71,17 @@ exports.signup = async (req, res) => {
     const newUser = await User.addUser(Username, email, phone, hashedPassword, gender, height, weight, true);
 
     res.status(201).json({
-      message: "Signup successful! You can now login.",
-      success: true,
-    });
+  success: true,
+  message: "Signup successful! You can now login.",
+  user: {
+    Username: newUser.username,
+    email: newUser.email,
+    phone: newUser.phone,
+    gender: newUser.gender || "Not specified",
+    height: newUser.height || "Not specified",
+    weight: newUser.weight || "Not specified",
+  },
+});
   } catch (err) {
     console.error("❌ Signup error:", err);
     res.status(500).json({ 
@@ -105,17 +113,19 @@ exports.login = async (req, res) => {
 
     const token = generateJwt({ email: user.email, id: user.id });
 
-    res.json({
-      token,
-      user: {
-        Username: user.username,
-        email: user.email,
-        phone: user.phone,
-        gender: user.gender,
-        height: user.height,
-        weight: user.weight,
-      },
-    });
+   res.json({
+  success: true,
+  message: "Login successful",
+  token,
+  user: {
+    Username: user.username,
+    email: user.email,
+    phone: user.phone || "Not specified",
+    gender: user.gender || "Not specified",
+    height: user.height || "Not specified",
+    weight: user.weight || "Not specified",
+  },
+});
   } catch (err) {
     console.error("❌ Login error:", err);
     res.status(500).json({ 
