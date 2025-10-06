@@ -68,7 +68,7 @@ exports.signup = async (req, res) => {
 
     // Hash password and save user
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.addUser(Username, email, phone, hashedPassword, gender, height, weight, true);
+    const newUser = await User.addUser(username, email, phone, hashedPassword, gender, height, weight, true);
 
     res.status(201).json({
   success: true,
