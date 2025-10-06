@@ -17,7 +17,7 @@ const SignupForm = () => {
     heightFeet: "",
     heightInches: "",
     weight: "",
-    weightUnit: "kg"
+    weightUnit: "kg",
   });
 
   const [message, setMessage] = useState("");
@@ -36,12 +36,16 @@ const SignupForm = () => {
   };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
-  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
+  const toggleConfirmPasswordVisibility = () =>
+    setShowConfirmPassword(!showConfirmPassword);
 
   const getFlagEmoji = (isoCode) => {
     if (!isoCode) return "";
     try {
-      const codePoints = isoCode.toUpperCase().split("").map(c => 127397 + c.charCodeAt(0));
+      const codePoints = isoCode
+        .toUpperCase()
+        .split("")
+        .map((c) => 127397 + c.charCodeAt(0));
       return String.fromCodePoint(...codePoints);
     } catch {
       return "";
@@ -52,8 +56,8 @@ const SignupForm = () => {
     const d = digits.replace(/\D/g, "").slice(0, 10);
     if (d.length === 0) return "";
     if (d.length <= 3) return `(${d}`;
-    if (d.length <= 6) return `(${d.slice(0,3)})-${d.slice(3)}`;
-    return `(${d.slice(0,3)})-${d.slice(3,6)}-${d.slice(6,10)}`;
+    if (d.length <= 6) return `(${d.slice(0, 3)})-${d.slice(3)}`;
+    return `(${d.slice(0, 3)})-${d.slice(3, 6)}-${d.slice(6, 10)}`;
   };
 
   const handlePhoneChange = (e) => {
@@ -70,7 +74,15 @@ const SignupForm = () => {
 
     const phoneDigits = (formData.phone || "").replace(/\D/g, "");
 
-    if (!formData.username || !formData.email || !formData.password || !phoneDigits) {
+    if (
+      !formData.username ||
+      !formData.email ||
+      !formData.password ||
+      !phoneDigits ||
+      !formData.heightFeet ||
+      !formData.heightInches ||
+      !formData.weight
+    ) {
       setMessage("❌ Please fill in all required fields");
       setMessageType("error");
       setLoading(false);
@@ -91,14 +103,12 @@ const SignupForm = () => {
       return;
     }
 
-    let heightInCm = "";
-    if (formData.heightFeet && formData.heightInches) {
-      const totalInches = parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches);
-      heightInCm = Math.round(totalInches * 2.54);
-    }
+    const totalInches =
+      parseInt(formData.heightFeet) * 12 + parseInt(formData.heightInches);
+    const heightInCm = Math.round(totalInches * 2.54);
 
     let weightInKg = formData.weight;
-    if (formData.weightUnit === "lbs" && formData.weight) {
+    if (formData.weightUnit === "lbs") {
       weightInKg = Math.round(parseFloat(formData.weight) * 0.453592);
     }
 
@@ -107,8 +117,8 @@ const SignupForm = () => {
       email: formData.email.trim(),
       password: formData.password,
       gender: formData.gender,
-      height: heightInCm || "",
-      weight: weightInKg || "",
+      height: heightInCm,
+      weight: weightInKg,
       phone: `${formData.countryCode}${phoneDigits}`,
       phoneFormatted: formData.phone,
     };
@@ -165,7 +175,6 @@ const SignupForm = () => {
     }
   };
 
-  // 💡 --- UI Section ---
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
@@ -183,9 +192,10 @@ const SignupForm = () => {
               ...messageStyle,
               background: messageType === "success" ? "#d4edda" : "#f8d7da",
               color: messageType === "success" ? "#155724" : "#721c24",
-              border: messageType === "success"
-                ? "1px solid #c3e6cb"
-                : "1px solid #f5c6cb",
+              border:
+                messageType === "success"
+                  ? "1px solid #c3e6cb"
+                  : "1px solid #f5c6cb",
             }}
           >
             {message.split("\n").map((line, i) => (
@@ -234,7 +244,7 @@ const SignupForm = () => {
                   name="countryCode"
                   value={formData.countryCode}
                   onChange={handleChange}
-                  style={{ ...selectStyle, ...nativeSelectStyle }}
+                  style={{ ...selectStyle }}
                   disabled={loading}
                 >
                   {countryCodes.map((c) => (
@@ -243,8 +253,6 @@ const SignupForm = () => {
                     </option>
                   ))}
                 </select>
-                <div style={countryDisplayStyle}>{formData.countryCode}</div>
-                <span style={selectArrowStyle}>▼</span>
               </div>
               <input
                 type="text"
@@ -256,6 +264,76 @@ const SignupForm = () => {
                 style={phoneInputStyle}
                 disabled={loading}
               />
+            </div>
+          </div>
+
+          {/* Height & Weight */}
+          <div style={heightWeightRow}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Height</label>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <select
+                  name="heightFeet"
+                  value={formData.heightFeet}
+                  onChange={handleChange}
+                  required
+                  style={selectStyle}
+                  disabled={loading}
+                >
+                  <option value="">Feet</option>
+                  {[...Array(8)].map((_, i) => {
+                    const feet = 4 + i;
+                    return (
+                      <option key={feet} value={feet}>
+                        {feet}
+                      </option>
+                    );
+                  })}
+                </select>
+                <select
+                  name="heightInches"
+                  value={formData.heightInches}
+                  onChange={handleChange}
+                  required
+                  style={selectStyle}
+                  disabled={loading}
+                >
+                  <option value="">Inches</option>
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i} value={i}>
+                      {i}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Weight</label>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input
+                  type="number"
+                  name="weight"
+                  placeholder="Weight"
+                  value={formData.weight}
+                  onChange={handleChange}
+                  required
+                  style={inputStyle}
+                  min="1"
+                  max="1000"
+                  disabled={loading}
+                />
+                <select
+                  name="weightUnit"
+                  value={formData.weightUnit}
+                  onChange={handleChange}
+                  style={selectStyle}
+                  disabled={loading}
+                >
+                  <option value="kg">kg</option>
+                  <option value="lbs">lbs</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -335,7 +413,7 @@ const SignupForm = () => {
   );
 };
 
-// ✅ --- Styles (same as your original ones) ---
+// 💅 Styles
 const containerStyle = {
   minHeight: "100vh",
   display: "flex",
@@ -350,7 +428,7 @@ const cardStyle = {
   padding: "2rem",
   boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
   width: "100%",
-  maxWidth: "450px",
+  maxWidth: "500px",
 };
 const headerStyle = { textAlign: "center", marginBottom: "1.5rem" };
 const logoStyle = { display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" };
@@ -387,11 +465,18 @@ const passwordToggleStyle = {
 };
 const phoneRowStyle = { display: "flex", gap: "0.5rem", alignItems: "center" };
 const countrySelectInline = { position: "relative", width: "80px" };
-const selectStyle = { width: "100%", borderRadius: "8px", border: "2px solid #e2e8f0" };
-const nativeSelectStyle = { opacity: 1 };
-const countryDisplayStyle = { position: "absolute", top: "50%", left: "10px", transform: "translateY(-50%)" };
-const selectArrowStyle = { position: "absolute", right: "6px", top: "50%" };
+const selectStyle = {
+  width: "100%",
+  borderRadius: "8px",
+  border: "2px solid #e2e8f0",
+  padding: "0.75rem",
+};
 const phoneInputStyle = { flex: 1, border: "2px solid #e2e8f0", borderRadius: "8px", padding: "0.75rem" };
+const heightWeightRow = {
+  display: "flex",
+  gap: "1rem",
+  marginTop: "0.5rem",
+};
 const buttonStyle = {
   padding: "0.875rem 2rem",
   background: "linear-gradient(135deg, #00695c, #004d40)",
