@@ -13,7 +13,7 @@ const SignupForm = () => {
     phone: "",
     password: "",
     confirmPassword: "",
-    gender: "", // <- now included
+    gender: "",
     heightFeet: "",
     heightInches: "",
     weight: "",
@@ -81,8 +81,7 @@ const SignupForm = () => {
       !phoneDigits ||
       !formData.heightFeet ||
       !formData.heightInches ||
-      !formData.weight ||
-      !formData.gender // <- check gender is selected
+      !formData.weight
     ) {
       setMessage("❌ Please fill in all required fields");
       setMessageType("error");
@@ -117,7 +116,7 @@ const SignupForm = () => {
       username: formData.username.trim(),
       email: formData.email.trim(),
       password: formData.password,
-      gender: formData.gender, // <- send gender
+      gender: formData.gender,
       height: heightInCm,
       weight: weightInKg,
       phone: `${formData.countryCode}${phoneDigits}`,
@@ -236,24 +235,6 @@ const SignupForm = () => {
             />
           </div>
 
-          {/* Gender */}
-          <div style={inputGroupStyle}>
-            <label style={labelStyle}>Gender</label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-              required
-              style={selectStyle}
-              disabled={loading}
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
           {/* Phone */}
           <div style={inputGroupStyle}>
             <label style={labelStyle}>Phone Number</label>
@@ -356,7 +337,7 @@ const SignupForm = () => {
             </div>
           </div>
 
-          {/* Password */}
+          {/* Passwords */}
           <div style={inputGroupStyle}>
             <label style={labelStyle}>Password</label>
             <div style={passwordContainerStyle}>
@@ -432,26 +413,79 @@ const SignupForm = () => {
   );
 };
 
-// 💅 Styles (use your existing styles)
-const containerStyle = { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" };
-const cardStyle = { background: "white", borderRadius: "15px", padding: "2rem", boxShadow: "0 15px 35px rgba(0,0,0,0.1)", width: "100%", maxWidth: "500px" };
+// 💅 Styles
+const containerStyle = {
+  minHeight: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "1rem",
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+};
+const cardStyle = {
+  background: "white",
+  borderRadius: "15px",
+  padding: "2rem",
+  boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+  width: "100%",
+  maxWidth: "500px",
+};
 const headerStyle = { textAlign: "center", marginBottom: "1.5rem" };
 const logoStyle = { display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" };
 const logoIcon = { fontSize: "2rem" };
-const logoText = { fontSize: "1.5rem", fontWeight: "700", background: "linear-gradient(135deg, #00695c, #004d40)", WebkitBackgroundClip: "text", color: "transparent" };
+const logoText = {
+  fontSize: "1.5rem",
+  fontWeight: "700",
+  background: "linear-gradient(135deg, #00695c, #004d40)",
+  WebkitBackgroundClip: "text",
+  color: "transparent",
+};
 const titleStyle = { fontSize: "1.5rem", fontWeight: "600", color: "#2d3748" };
 const formStyle = { display: "flex", flexDirection: "column", gap: "1rem" };
 const inputGroupStyle = { display: "flex", flexDirection: "column" };
 const labelStyle = { fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" };
-const inputStyle = { padding: "0.75rem", borderRadius: "8px", border: "2px solid #e2e8f0", fontSize: "0.9rem", outline: "none", width: "100%" };
+const inputStyle = {
+  padding: "0.75rem",
+  borderRadius: "8px",
+  border: "2px solid #e2e8f0",
+  fontSize: "0.9rem",
+  outline: "none",
+  width: "100%",
+};
 const passwordContainerStyle = { position: "relative", width: "100%" };
-const passwordToggleStyle = { position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "1rem" };
+const passwordToggleStyle = {
+  position: "absolute",
+  right: "8px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "1rem",
+};
 const phoneRowStyle = { display: "flex", gap: "0.5rem", alignItems: "center" };
 const countrySelectInline = { position: "relative", width: "80px" };
-const selectStyle = { width: "100%", borderRadius: "8px", border: "2px solid #e2e8f0", padding: "0.75rem" };
+const selectStyle = {
+  width: "100%",
+  borderRadius: "8px",
+  border: "2px solid #e2e8f0",
+  padding: "0.75rem",
+};
 const phoneInputStyle = { flex: 1, border: "2px solid #e2e8f0", borderRadius: "8px", padding: "0.75rem" };
-const heightWeightRow = { display: "flex", gap: "1rem", marginTop: "0.5rem" };
-const buttonStyle = { padding: "0.875rem 2rem", background: "linear-gradient(135deg, #00695c, #004d40)", color: "white", border: "none", borderRadius: "8px", fontSize: "1rem", fontWeight: "600" };
+const heightWeightRow = {
+  display: "flex",
+  gap: "1rem",
+  marginTop: "0.5rem",
+};
+const buttonStyle = {
+  padding: "0.875rem 2rem",
+  background: "linear-gradient(135deg, #00695c, #004d40)",
+  color: "white",
+  border: "none",
+  borderRadius: "8px",
+  fontSize: "1rem",
+  fontWeight: "600",
+};
 const footerStyle = { textAlign: "center", marginTop: "1.5rem" };
 const footerTextStyle = { color: "#718096" };
 const linkStyle = { color: "#00695c", textDecoration: "none", fontWeight: "600" };
