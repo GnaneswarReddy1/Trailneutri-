@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 // API configuration
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
 const LoginForm = ({ onLogin }) => {
   const [formData, setFormData] = useState({

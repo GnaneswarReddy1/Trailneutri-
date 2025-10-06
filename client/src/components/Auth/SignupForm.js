@@ -4,7 +4,7 @@ import PasswordStrengthMeter from "../Common/PasswordStrengthMeter";
 import countryCodes from "../../data/countryCodes";
 
 // API configuration
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
