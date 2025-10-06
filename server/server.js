@@ -19,31 +19,32 @@ console.log("✅ JWT_SECRET:", process.env.JWT_SECRET ? "Loaded" : "Missing");
 console.log("✅ CORS_ORIGIN:", process.env.CORS_ORIGIN || "Not set (using default: *)");
 console.log("=".repeat(50));
 
-// ================================================
-// ✅ CORS CONFIGURATION (support multiple origins)
-// ================================================
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
-  : ["*"];
+
+// ===============================
+// 🌐 CORS Configuration
+// ===============================
+const cors = require("cors");
+
+const allowedOrigins = (process.env.CORS_ORIGIN || "").split(",").map(o => o.trim());
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl)
+      // Allow requests with no origin (e.g. Postman, server-to-server)
       if (!origin) return callback(null, true);
 
+      // If wildcard or origin matches one of the allowed ones
       if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.warn(`🚫 Blocked by CORS: ${origin}`);
+        console.log("🚫 Blocked by CORS:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true, // if your frontend uses cookies or auth headers
   })
 );
+
 
 app.use(bodyParser.json());
 
