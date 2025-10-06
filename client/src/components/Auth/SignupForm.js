@@ -71,31 +71,35 @@ const SignupForm = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+  e.preventDefault();
+  setLoading(true);
+  setMessage("");
 
-    // Basic validation
-    const phoneDigits = (formData.phone || '').replace(/\D/g, '');
-    if (!formData.Username || !formData.email || !formData.password) {
-      setMessage("❌ Please fill in all required fields");
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-    // Require phone of 10 digits
-    if (phoneDigits.length !== 10) {
-      setMessage("❌ Please enter a valid 10-digit phone number");
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("❌ Passwords do not match");
-      setMessageType("error");
-      setLoading(false);
-      return;
-    }
+  // Basic validation
+  const phoneDigits = (formData.phone || '').replace(/\D/g, '');
+  
+  // FIXED: Check all required fields including phone
+  if (!formData.Username || !formData.email || !formData.password || !phoneDigits) {
+    setMessage("❌ Please fill in all required fields");
+    setMessageType("error");
+    setLoading(false);
+    return;
+  }
+  
+  // Require phone of 10 digits
+  if (phoneDigits.length !== 10) {
+    setMessage("❌ Please enter a valid 10-digit phone number");
+    setMessageType("error");
+    setLoading(false);
+    return;
+  }
+  
+  if (formData.password !== formData.confirmPassword) {
+    setMessage("❌ Passwords do not match");
+    setMessageType("error");
+    setLoading(false);
+    return;
+  }
 
     // Convert height to cm if needed
     let heightInCm;
@@ -111,7 +115,7 @@ const SignupForm = () => {
     }
 
     const userData = {
-      Username: formData.Username,
+      username: formData.Username,
       email: formData.email,
       password: formData.password,
       gender: formData.gender,
