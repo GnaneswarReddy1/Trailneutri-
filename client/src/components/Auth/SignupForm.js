@@ -79,6 +79,7 @@ const SignupForm = () => {
       !formData.email ||
       !formData.password ||
       !phoneDigits ||
+      !formData.gender ||
       !formData.heightFeet ||
       !formData.heightInches ||
       !formData.weight
