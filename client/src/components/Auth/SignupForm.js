@@ -266,7 +266,24 @@ const SignupForm = () => {
               />
             </div>
           </div>
-
+{/*GENDER FIELD*/}
+<div style={inputGroupStyle}>
+  <label style={labelStyle}>Gender *</label>
+  <select
+    name="gender"
+    value={formData.gender}
+    onChange={handleChange}
+    required
+    style={selectStyle}
+    disabled={loading}
+  >
+    <option value="">Select Gender *</option>
+    <option value="male">Male</option>
+    <option value="female">Female</option>
+    <option value="other">Other</option>
+    <option value="prefer-not-to-say">Prefer not to say</option>
+  </select>
+</div>
           {/* Height & Weight */}
           <div style={heightWeightRow}>
             <div style={{ flex: 1 }}>
