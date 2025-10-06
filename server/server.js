@@ -6,8 +6,16 @@ const routes = require("./routes");
 
 const app = express();
 
-// 🗄️ PostgreSQL
+// 🔧 ENVIRONMENT VARIABLE DEBUGGING
+console.log("=".repeat(50));
+console.log("🔧 ENVIRONMENT CONFIGURATION");
+console.log("=".repeat(50));
+console.log("✅ PORT:", process.env.PORT || "Not set (using default: 4000)");
+console.log("✅ NODE_ENV:", process.env.NODE_ENV || "Not set (using default: development)");
 console.log("✅ DATABASE_URL:", process.env.DATABASE_URL ? "Loaded" : "Missing");
+console.log("✅ JWT_SECRET:", process.env.JWT_SECRET ? "Loaded" : "Missing");
+console.log("✅ CORS_ORIGIN:", process.env.CORS_ORIGIN || "Not set (using default: *)");
+console.log("=".repeat(50));
 
 // Configure CORS to allow all connections
 app.use(
