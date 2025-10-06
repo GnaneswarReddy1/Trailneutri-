@@ -39,10 +39,10 @@ const extractToken = (req) => {
 // ===============================
 exports.signup = async (req, res) => {
   try {
-    const { Username, email, phone, password, gender, height, weight } = req.body;
+    const { username, email, phone, password, gender, height, weight } = req.body;
     
     // Validation
-    if (!Username || !email || !phone || !password) {
+    if (!username || !email || !phone || !password) {
       return res.status(400).json({
         message: "Username, email, phone, and password are required"
       });
