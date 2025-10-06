@@ -47,16 +47,21 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
 
   // Convert height from cm back to feet and inches for display
   const convertHeightToFeetInches = (heightInCm) => {
-    if (!heightInCm || heightInCm === "Not specified") return "Not specified";
+    if (!heightInCm || heightInCm === "Not specified" || heightInCm === "" || heightInCm === null) return "Not specified";
     
-    const totalInches = Math.round(heightInCm / 2.54);
-    const feet = Math.floor(totalInches / 12);
-    const inches = totalInches % 12;
-    
-    return `${feet}'${inches}"`;
+    try {
+      const totalInches = Math.round(parseFloat(heightInCm) / 2.54);
+      const feet = Math.floor(totalInches / 12);
+      const inches = totalInches % 12;
+      
+      return `${feet}'${inches}"`;
+    } catch (error) {
+      console.error("Error converting height:", error);
+      return "Not specified";
+    }
   };
 
-  // Safe user data access - FIXED VERSION
+  // Safe user data access - IMPROVED VERSION
   const getUserUsername = () => {
     if (!userInfo) return "User";
     
@@ -84,15 +89,30 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
   };
 
   const getUserGender = () => {
-    return userInfo?.gender || "Not specified";
+    const gender = userInfo?.gender;
+    if (!gender || gender === "" || gender === null) return "Not specified";
+    
+    // Format gender for display
+    const genderMap = {
+      'male': 'Male',
+      'female': 'Female', 
+      'other': 'Other',
+      'prefer-not-to-say': 'Prefer not to say'
+    };
+    
+    return genderMap[gender] || gender.charAt(0).toUpperCase() + gender.slice(1);
   };
 
   const getUserHeight = () => {
-    return userInfo?.height || "Not specified";
+    const height = userInfo?.height;
+    if (!height || height === "" || height === null) return "Not specified";
+    return height.toString();
   };
 
   const getUserWeight = () => {
-    return userInfo?.weight || "Not specified";
+    const weight = userInfo?.weight;
+    if (!weight || weight === "" || weight === null) return "Not specified";
+    return weight.toString();
   };
 
   // Show loading state
@@ -297,7 +317,7 @@ const Dashboard = ({ userInfo, onLogout, onUpdateUser }) => {
   );
 };
 
-// Styles
+// Styles (keep all your existing styles the same)
 const dashboardStyle = {
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',

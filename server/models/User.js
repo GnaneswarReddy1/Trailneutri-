@@ -130,19 +130,35 @@ exports.updatePassword = async (email, hashedPassword) => {
   }
 };
 
-// Add user with phone number
+// Add user with phone number - FIXED VERSION
 exports.addUser = async (username, email, phone, password, gender, height, weight, isVerified = true) => {
   try {
-    console.log("📝 Adding user with phone:", phone);
+    console.log("📝 Adding user with data:", {
+      username, email, phone, gender, height, weight, isVerified
+    });
+    
+    // Ensure empty strings are converted to NULL for database
+    const cleanGender = gender && gender !== "" ? gender : null;
+    const cleanHeight = height && height !== "" ? height.toString() : null;
+    const cleanWeight = weight && weight !== "" ? weight.toString() : null;
     
     const result = await pool.query(
       `INSERT INTO users (username, email, phone, password, gender, height, weight, is_verified)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [username, email, phone, password, gender, height, weight, isVerified]
+      [username, email, phone, password, cleanGender, cleanHeight, cleanWeight, isVerified]
     );
     
     console.log("✅ User added successfully with ID:", result.rows[0].id);
+    console.log("📊 Saved user data:", {
+      id: result.rows[0].id,
+      username: result.rows[0].username,
+      email: result.rows[0].email,
+      phone: result.rows[0].phone,
+      gender: result.rows[0].gender,
+      height: result.rows[0].height,
+      weight: result.rows[0].weight
+    });
     return result.rows[0];
   } catch (err) {
     console.error("❌ Error adding user:", err);
