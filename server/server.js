@@ -23,7 +23,7 @@ console.log("=".repeat(50));
 // ===============================
 // 🌐 CORS Configuration
 // ===============================
-const cors = require("cors");
+
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "").split(",").map(o => o.trim());
 
