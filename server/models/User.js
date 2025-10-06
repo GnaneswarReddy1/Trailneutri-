@@ -29,12 +29,21 @@ const pool = new Pool({
     `);
     console.log("✅ PostgreSQL users table ready");
 
+    // Check if phone column exists, if not add it
+    try {
+      await pool.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS phone VARCHAR(50)
+      `);
+      console.log("✅ Phone column verified/added");
+    } catch (alterError) {
+      console.log("✅ Phone column already exists");
+    }
+
   } catch (err) {
     console.error("❌ Error creating users table:", err);
   }
 })();
-
-// --------------------- CRUD FUNCTIONS ---------------------
 
 // Find user by email
 exports.findByEmail = async (email) => {
@@ -50,13 +59,19 @@ exports.findByEmail = async (email) => {
 // Find user by email and phone
 exports.findByEmailAndPhone = async (email, phoneNumber) => {
   try {
+    // Remove any formatting from phone number for comparison
     const cleanPhone = phoneNumber.replace(/\D/g, '');
+    
+    console.log("🔍 Searching user with email:", email, "and phone:", cleanPhone);
+    
     const query = `
       SELECT * FROM users 
       WHERE email = $1 
       AND REPLACE(COALESCE(phone, ''), '-', '') LIKE $2
     `;
+    
     const result = await pool.query(query, [email, `%${cleanPhone}%`]);
+    console.log("📊 Found users:", result.rows.length);
     return result.rows[0];
   } catch (err) {
     console.error("❌ Error finding user by email and phone:", err);
@@ -72,6 +87,7 @@ exports.findByResetToken = async (token) => {
       WHERE reset_password_token = $1 
       AND reset_password_expires > NOW()
     `;
+    
     const result = await pool.query(query, [token]);
     return result.rows[0];
   } catch (err) {
@@ -80,15 +96,53 @@ exports.findByResetToken = async (token) => {
   }
 };
 
-// Add user
+// Update reset token
+exports.updateResetToken = async (email, token, expires) => {
+  try {
+    const query = `
+      UPDATE users 
+      SET reset_password_token = $1, reset_password_expires = $2 
+      WHERE email = $3
+    `;
+    
+    await pool.query(query, [token, expires, email]);
+  } catch (err) {
+    console.error("❌ Error updating reset token:", err);
+    throw err;
+  }
+};
+
+// Update password
+exports.updatePassword = async (email, hashedPassword) => {
+  try {
+    const query = `
+      UPDATE users 
+      SET password = $1, 
+          reset_password_token = NULL, 
+          reset_password_expires = NULL
+      WHERE email = $2
+    `;
+    
+    await pool.query(query, [hashedPassword, email]);
+  } catch (err) {
+    console.error("❌ Error updating password:", err);
+    throw err;
+  }
+};
+
+// Add user with phone number
 exports.addUser = async (username, email, phone, password, gender, height, weight, isVerified = true) => {
   try {
+    console.log("📝 Adding user with phone:", phone);
+    
     const result = await pool.query(
       `INSERT INTO users (username, email, phone, password, gender, height, weight, is_verified)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [username, email, phone, password, gender, height, weight, isVerified]
     );
+    
+    console.log("✅ User added successfully with ID:", result.rows[0].id);
     return result.rows[0];
   } catch (err) {
     console.error("❌ Error adding user:", err);
@@ -96,7 +150,7 @@ exports.addUser = async (username, email, phone, password, gender, height, weigh
   }
 };
 
-// Update user phone
+// Update user phone number
 exports.updateUserPhone = async (email, phone) => {
   try {
     const result = await pool.query(
@@ -110,53 +164,7 @@ exports.updateUserPhone = async (email, phone) => {
   }
 };
 
-// Update user gender
-exports.updateUserGender = async (email, gender) => {
-  try {
-    const result = await pool.query(
-      `UPDATE users SET gender = $1 WHERE email = $2 RETURNING *`,
-      [gender, email]
-    );
-    return result.rows[0];
-  } catch (err) {
-    console.error("❌ Error updating user gender:", err);
-    throw err;
-  }
-};
-
-// Update reset token
-exports.updateResetToken = async (email, token, expires) => {
-  try {
-    await pool.query(
-      `UPDATE users 
-       SET reset_password_token = $1, reset_password_expires = $2 
-       WHERE email = $3`,
-      [token, expires, email]
-    );
-  } catch (err) {
-    console.error("❌ Error updating reset token:", err);
-    throw err;
-  }
-};
-
-// Update password
-exports.updatePassword = async (email, hashedPassword) => {
-  try {
-    await pool.query(
-      `UPDATE users 
-       SET password = $1, 
-           reset_password_token = NULL, 
-           reset_password_expires = NULL
-       WHERE email = $2`,
-      [hashedPassword, email]
-    );
-  } catch (err) {
-    console.error("❌ Error updating password:", err);
-    throw err;
-  }
-};
-
-// Get all users
+// Get all users with phone numbers
 exports.getAllUsers = async () => {
   try {
     const result = await pool.query(`
@@ -171,7 +179,7 @@ exports.getAllUsers = async () => {
   }
 };
 
-// Debug: table structure
+// Debug: Check table structure
 exports.getTableStructure = async () => {
   try {
     const result = await pool.query(`
@@ -187,7 +195,7 @@ exports.getTableStructure = async () => {
   }
 };
 
-// --------------------- VALIDATION HELPERS ---------------------
+// Helpers
 exports.isValidEmail = (email) => validator.isEmail(email);
 
 exports.validatePasswordStrength = (password) => {
